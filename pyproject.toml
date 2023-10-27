@@ -7,4 +7,5 @@ authors = [
 ]
 dependencies = [
     "scikit-learn",
+    "rasterio",
 ]
