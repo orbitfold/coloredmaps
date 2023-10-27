@@ -1,0 +1,10 @@
+[project]
+name = "coloredmaps"
+description = "Code for the dataxplorers hackathon - color information in maps track"
+version = "0.1.0"
+authors = [
+    { name = "Vytautas Jancauskas", email = "vytautas.jancauskas@dlr.de" }
+]
+dependencies = [
+    "scikit-learn",
+]
