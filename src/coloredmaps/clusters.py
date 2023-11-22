@@ -1,5 +1,4 @@
-from sklearn.cluster import OPTICS, MeanShift
-from scipy.signal import decimate
+from sklearn.cluster import MeanShift
 import rasterio
 from rasterio.enums import Resampling
 import numpy as np
@@ -17,7 +16,7 @@ def find_clusters(image_path, output_dir, factor=1.0, n_jobs=8):
     filename = pathlib.Path(image_path).stem
     with rasterio.open(image_path) as src:
         profile = src.profile
-        orig_data = src.read(out_shape=(src.count, int(src.height * factor), int(src.width * factor)), resampling=Resampling.nearest)
+        orig_data = src.read(out_shape=(src.count, int(src.height * factor), int(src.width * factor)), resampling=Resampling.bilinear)
         data = orig_data.transpose()
         shape = data.shape
         data = data.reshape(shape[0] * shape[1], 3)
