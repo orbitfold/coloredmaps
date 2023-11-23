@@ -10,28 +10,28 @@ import json
 import pathlib
 import os
 
-def find_clusters(image_path, output_dir, bandwidth=50, factor=1.0, n_jobs=8):
+def find_clusters(image_path, output_dir, n_samples=100000, bandwidth=50, n_jobs=8):
     """Finds clusters in a given map in the RGB space.
     """
     filename = pathlib.Path(image_path).stem
     with rasterio.open(image_path) as src:
         profile = src.profile
-        orig_data = src.read(out_shape=(src.count, int(src.height * factor), int(src.width * factor)), resampling=Resampling.bilinear)
+        orig_data = src.read()
         data = orig_data.transpose()
         shape = data.shape
         data = data.reshape(shape[0] * shape[1], 3)
-        clustering = MeanShift(bandwidth=bandwidth, n_jobs=n_jobs).fit(data)
+        clustering = MeanShift(bandwidth=bandwidth, n_jobs=n_jobs).fit(data[np.random.choice(data.shape[0], n_samples)])
         results = {}
-        labels = clustering.labels_
-        labels = np.unique(labels)
+        predicted_labels = clustering.predict(data)
+        labels = np.unique(predicted_labels)
         nodata = 255
         profile['nodata'] = nodata
         for label in labels:
             if label != -1:
                 center = clustering.cluster_centers_[label]
-                size = data[clustering.labels_ == label].shape[0]
+                size = data[predicted_labels == label].shape[0]
                 class_data = np.ones((shape[0] * shape[1], 3)) * nodata
-                class_data[clustering.labels_ == label] = data[clustering.labels_ == label]
+                class_data[predicted_labels == label] = data[predicted_labels == label]
                 class_data = class_data.reshape((shape[0], shape[1], 3))
                 class_data = class_data.transpose()
                 class_output = pathlib.Path(output_dir) / f"{filename}_{label}.tiff"
@@ -45,12 +45,14 @@ def find_clusters(image_path, output_dir, bandwidth=50, factor=1.0, n_jobs=8):
 
 @click.command()
 @click.option('-i', '--input-file', help='Input TIFF file')
-@click.option('-o', '--output-dir', help='Output directory')
+@click.option('-o', '--output-dir', help='Output directory', default=None)
+@click.option('-s', '--n-samples', help='Number of samples for clustering', default=100000)
 @click.option('-b', '--bandwidth', help='Bandwidth parameter', default=50)
-@click.option('-f', '--factor', help='Downsampling factor', default=0.1)
 @click.option('-n', '--n-jobs', help='Number of jobs for mean shift algorithm', default=8)
-def run_clusterize(input_file, output_dir, bandwidth, factor, n_jobs):
-    find_clusters(input_file, output_dir, bandwidth=bandwidth, factor=factor, n_jobs=n_jobs)
+def run_clusterize(input_file, output_dir, n_samples, bandwidth, n_jobs):
+    if output_dir is None:
+        os.makedirs(pathlib.Path(input_file).stem, exist_ok=True)
+    find_clusters(input_file, output_dir, n_samples=n_samples, bandwidth=bandwidth, n_jobs=n_jobs)
 
 if __name__ == '__main__':
     run_clusterize()
