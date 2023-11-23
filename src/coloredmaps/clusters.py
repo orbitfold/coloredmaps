@@ -52,6 +52,7 @@ def find_clusters(image_path, output_dir, n_samples=100000, bandwidth=50, n_jobs
 def run_clusterize(input_file, output_dir, n_samples, bandwidth, n_jobs):
     if output_dir is None:
         os.makedirs(pathlib.Path(input_file).stem, exist_ok=True)
+        output_dir = pathlib.Path(input_file).stem
     find_clusters(input_file, output_dir, n_samples=n_samples, bandwidth=bandwidth, n_jobs=n_jobs)
 
 if __name__ == '__main__':
