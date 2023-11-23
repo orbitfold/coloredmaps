@@ -10,7 +10,12 @@ import json
 import pathlib
 import os
 
-def find_clusters(image_path, output_dir, n_samples=100000, bandwidth=50, n_jobs=8):
+def sharpen(img):
+    kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+    sharpened = cv2.filter2D(img, -1, kernel)
+    return sharpened
+
+def find_clusters(image_path, output_dir, sharpen=0, n_samples=100000, bandwidth=50, n_jobs=8):
     """Finds clusters in a given map in the RGB space.
     """
     filename = pathlib.Path(image_path).stem
@@ -18,6 +23,8 @@ def find_clusters(image_path, output_dir, n_samples=100000, bandwidth=50, n_jobs
         profile = src.profile
         orig_data = src.read()
         data = orig_data.transpose()
+        for _ in range(sharpen):
+            data = sharpen(data)
         shape = data.shape
         data = data.reshape(shape[0] * shape[1], 3)
         clustering = MeanShift(bandwidth=bandwidth, n_jobs=n_jobs).fit(data[np.random.choice(data.shape[0], n_samples)])
@@ -49,11 +56,12 @@ def find_clusters(image_path, output_dir, n_samples=100000, bandwidth=50, n_jobs
 @click.option('-s', '--n-samples', help='Number of samples for clustering', default=100000)
 @click.option('-b', '--bandwidth', help='Bandwidth parameter', default=50)
 @click.option('-n', '--n-jobs', help='Number of jobs for mean shift algorithm', default=8)
-def run_clusterize(input_file, output_dir, n_samples, bandwidth, n_jobs):
+@click.option('-f', '--sharpen', help='Apply the sharpen filter a specified number of times', default=0)
+def run_clusterize(input_file, output_dir, n_samples, bandwidth, n_jobs, sharpen):
     if output_dir is None:
         os.makedirs(pathlib.Path(input_file).stem, exist_ok=True)
         output_dir = pathlib.Path(input_file).stem
-    find_clusters(input_file, output_dir, n_samples=n_samples, bandwidth=bandwidth, n_jobs=n_jobs)
+    find_clusters(input_file, output_dir, n_samples=n_samples, bandwidth=bandwidth, n_jobs=n_jobs, sharpen=sharpen)
 
 if __name__ == '__main__':
     run_clusterize()
