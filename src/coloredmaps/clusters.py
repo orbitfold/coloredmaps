@@ -10,7 +10,7 @@ import json
 import pathlib
 import os
 
-def find_clusters(image_path, output_dir, factor=1.0, n_jobs=8):
+def find_clusters(image_path, output_dir, bandwidth=50, factor=1.0, n_jobs=8):
     """Finds clusters in a given map in the RGB space.
     """
     filename = pathlib.Path(image_path).stem
@@ -20,7 +20,7 @@ def find_clusters(image_path, output_dir, factor=1.0, n_jobs=8):
         data = orig_data.transpose()
         shape = data.shape
         data = data.reshape(shape[0] * shape[1], 3)
-        clustering = MeanShift(bandwidth=50, n_jobs=n_jobs).fit(data)
+        clustering = MeanShift(bandwidth=bandwidth, n_jobs=n_jobs).fit(data)
         results = {}
         labels = clustering.labels_
         labels = np.unique(labels)
@@ -46,10 +46,11 @@ def find_clusters(image_path, output_dir, factor=1.0, n_jobs=8):
 @click.command()
 @click.option('-i', '--input-file', help='Input TIFF file')
 @click.option('-o', '--output-dir', help='Output directory')
+@click.option('-b', '--bandwidth', help='Bandwidth parameter')
 @click.option('-f', '--factor', help='Downsampling factor', default=0.1)
 @click.option('-n', '--n-jobs', help='Number of jobs for mean shift algorithm', default=8)
-def run_clusterize(input_file, output_dir, factor, n_jobs):
-    find_clusters(input_file, output_dir, factor=factor, n_jobs=n_jobs)
+def run_clusterize(input_file, output_dir, bandwidth, factor, n_jobs):
+    find_clusters(input_file, output_dir, bandwidth=bandwidth, factor=factor, n_jobs=n_jobs)
 
 if __name__ == '__main__':
     run_clusterize()
