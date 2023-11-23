@@ -46,7 +46,7 @@ def find_clusters(image_path, output_dir, bandwidth=50, factor=1.0, n_jobs=8):
 @click.command()
 @click.option('-i', '--input-file', help='Input TIFF file')
 @click.option('-o', '--output-dir', help='Output directory')
-@click.option('-b', '--bandwidth', help='Bandwidth parameter')
+@click.option('-b', '--bandwidth', help='Bandwidth parameter', default=50)
 @click.option('-f', '--factor', help='Downsampling factor', default=0.1)
 @click.option('-n', '--n-jobs', help='Number of jobs for mean shift algorithm', default=8)
 def run_clusterize(input_file, output_dir, bandwidth, factor, n_jobs):
