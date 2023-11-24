@@ -8,17 +8,23 @@ import json
 import pathlib
 import os
 
+colorSpaces = {
+    'rgb': (cv2.COLOR_BGR2RGB, cv2.COLOR_RGB2BGR),
+    'hsl': (cv2.COLOR_BGR2HLS, cv2.COLOR_HLS2BGR),
+    'xyz': (cv2.COLOR_BGR2XYZ, cv2.COLOR_XYZ2BGR)
+}
+
 def sharpen(img):
     kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
     sharpened = cv2.filter2D(img, -1, kernel)
     return sharpened
 
-def find_clusters(image_path, output_dir, sharpen_times=0, n_samples=100000, bandwidth=50, n_jobs=8, color=cv2.COLOR_BGR2RGB):
+def find_clusters(image_path, output_dir, sharpen_times=0, n_samples=100000, bandwidth=50, n_jobs=8, color='rgb'):
     """Finds clusters in a given map in the RGB space.
     """
     filename = pathlib.Path(image_path).stem
     data = cv2.imread(image_path)
-    data = cv2.cvtColor(data, color)    
+    data = cv2.cvtColor(data, colorSpaces[color][0])    
     for _ in range(sharpen_times):
         data = sharpen(data)
     shape = data.shape
@@ -39,8 +45,8 @@ def find_clusters(image_path, output_dir, sharpen_times=0, n_samples=100000, ban
             class_data[predicted_labels == label] = data[predicted_labels == label]
             class_data = class_data.reshape((shape[0], shape[1], 3))
             class_output = pathlib.Path(output_dir) / f"{filename}_{label}.tiff"
-            cv2.imwrite(str(class_output), cv2.cvtColor(class_data.astype(np.uint8), color))
-            results[str(label)] = {'center' : [int(x) for x in list(clustering.cluster_centers_[label])], 'size' : int(size)}
+            cv2.imwrite(str(class_output), cv2.cvtColor(class_data.astype(np.uint8), colorSpaces[color][1]))
+            results[str(label)] = {'center' : [int(x) for x in list(cv2.cvtColor(np.array([[clustering.cluster_centers_[label]]]), colorSpaces[color][1]))[0][0]], 'size' : int(size)}
     with open(pathlib.Path(output_dir) / f"{filename}.json", 'w') as fd:
         json.dump(results, fd)
     plt.pie([results[p]['size'] for p in results], colors=[[x / 255.0 for x in results[p]['center']] for p in results])
@@ -53,11 +59,14 @@ def find_clusters(image_path, output_dir, sharpen_times=0, n_samples=100000, ban
 @click.option('-b', '--bandwidth', help='Bandwidth parameter', default=50)
 @click.option('-n', '--n-jobs', help='Number of jobs for mean shift algorithm', default=8)
 @click.option('-f', '--sharpen', help='Apply the sharpen filter a specified number of times', default=0)
-@click.option('-c', '--color', help='Choose a color space', default=cv2.COLOR_BGR2RGB)
+@click.option('-c', '--color', help='Choose a color space', default='rgb')
 def run_clusterize(input_file, output_dir, n_samples, bandwidth, n_jobs, sharpen, color):
     if output_dir is None:
         os.makedirs(pathlib.Path(input_file).stem, exist_ok=True)
         output_dir = pathlib.Path(input_file).stem
+    if color not in colorSpaces:
+        print("Color space not supported")
+        exit()
     find_clusters(input_file, output_dir, n_samples=n_samples, bandwidth=bandwidth, n_jobs=n_jobs, sharpen_times=sharpen, color=color)
 
 if __name__ == '__main__':
