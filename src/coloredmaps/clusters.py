@@ -13,12 +13,12 @@ def sharpen(img):
     sharpened = cv2.filter2D(img, -1, kernel)
     return sharpened
 
-def find_clusters(image_path, output_dir, sharpen_times=0, n_samples=100000, bandwidth=50, n_jobs=8):
+def find_clusters(image_path, output_dir, sharpen_times=0, n_samples=100000, bandwidth=50, n_jobs=8, color=cv2.COLOR_BGR2RGB):
     """Finds clusters in a given map in the RGB space.
     """
     filename = pathlib.Path(image_path).stem
     data = cv2.imread(image_path)
-    data = cv2.cvtColor(data, cv2.COLOR_BGR2RGB)    
+    data = cv2.cvtColor(data, color)    
     for _ in range(sharpen_times):
         data = sharpen(data)
     shape = data.shape
@@ -39,7 +39,7 @@ def find_clusters(image_path, output_dir, sharpen_times=0, n_samples=100000, ban
             class_data[predicted_labels == label] = data[predicted_labels == label]
             class_data = class_data.reshape((shape[0], shape[1], 3))
             class_output = pathlib.Path(output_dir) / f"{filename}_{label}.tiff"
-            cv2.imwrite(str(class_output), cv2.cvtColor(class_data.astype(np.uint8), cv2.COLOR_RGB2BGR))
+            cv2.imwrite(str(class_output), cv2.cvtColor(class_data.astype(np.uint8), color))
             results[str(label)] = {'center' : [int(x) for x in list(clustering.cluster_centers_[label])], 'size' : int(size)}
     with open(pathlib.Path(output_dir) / f"{filename}.json", 'w') as fd:
         json.dump(results, fd)
@@ -53,11 +53,12 @@ def find_clusters(image_path, output_dir, sharpen_times=0, n_samples=100000, ban
 @click.option('-b', '--bandwidth', help='Bandwidth parameter', default=50)
 @click.option('-n', '--n-jobs', help='Number of jobs for mean shift algorithm', default=8)
 @click.option('-f', '--sharpen', help='Apply the sharpen filter a specified number of times', default=0)
-def run_clusterize(input_file, output_dir, n_samples, bandwidth, n_jobs, sharpen):
+@click.option('-c', '--color', help='Choose a color space', default=cv2.COLOR_BGR2RGB)
+def run_clusterize(input_file, output_dir, n_samples, bandwidth, n_jobs, sharpen, color):
     if output_dir is None:
         os.makedirs(pathlib.Path(input_file).stem, exist_ok=True)
         output_dir = pathlib.Path(input_file).stem
-    find_clusters(input_file, output_dir, n_samples=n_samples, bandwidth=bandwidth, n_jobs=n_jobs, sharpen_times=sharpen)
+    find_clusters(input_file, output_dir, n_samples=n_samples, bandwidth=bandwidth, n_jobs=n_jobs, sharpen_times=sharpen, color=color)
 
 if __name__ == '__main__':
     run_clusterize()
