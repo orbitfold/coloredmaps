@@ -1,3 +1,7 @@
+import click
+import pathlib
+import json
+
 COLORED = [
   '28_6404_4_fbg.jpg', '28_6506_4_fbg.jpg', '28_6605_D.jpg', 
   '28_6607_D.jpg', '28_6608_D.jpg', '28_6609_D.jpg', 
@@ -24,3 +28,17 @@ MONOCHROME = [
   'MA_Karten_und_Plaene_394_0001.tif', 'MA_Karten_und_Plaene_394_0002.tif', 'MF_KuPL_332_2_0001.tif',
   'MF_KuPL_380_0001.tif', 'Pls_8540_0008.tif', 'Pls_8540_0014.tif' 
 ]
+
+@click.command()
+@click.option('-i', '--input-dir', help='Input directory')
+@click.option('-r', '--ratio', help='Ratio parameter', default=0.25)
+def main(input_dir, ratio):
+  confusion = {
+    'colored': {'colored': 0, 'monochrome': 0},
+    'monochrome': {'colored': 0, 'monochrome': 0}
+  }
+  for c_map in COLORED:
+    pass
+
+if __name__ == '__main__':
+  main()
