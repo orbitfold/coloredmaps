@@ -38,7 +38,26 @@ def main(input_dir, ratio):
     'monochrome': {'colored': 0, 'monochrome': 0}
   }
   for c_map in COLORED:
-    pass
+    with open(os.path.join(input_dir, c_map), 'r') as fd:
+      data = json.load(fd)
+      sizes = [data[key]['size'] for key in data]
+      sizes = sorted(sizes)
+      r = sizes[-1] / float(sum(sizes[:-1]))
+      if r < ratio:
+        confusion['colored']['monochrome'] += 1
+      else:
+        confusion['colored']['colored'] += 1
+  for m_map in MONOCHROME:
+    with open(os.path.join(input_dir, c_map), 'r') as fd:
+      data = json.load(fd)
+      sizes = [data[key]['size'] for key in data]
+      sizes = sorted(sizes)
+      r = sizes[-1] / float(sum(sizes[:-1]))
+      if r < ratio:
+        confusion['monochrome']['monochrome'] += 1
+      else:
+        confusion['monochrome']['colored'] += 1
+  print(confusion)
 
 if __name__ == '__main__':
   main()
