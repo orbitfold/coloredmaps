@@ -33,7 +33,7 @@ def find_clusters(image_path, output_dir, sharpen_times=0, n_samples=100000, ban
     shape = data.shape
     data = data.reshape(shape[0] * shape[1], 3)
     if bandwidth == -1:
-        bandwidth = estimate_bandwidth(data[np.random.choice(data.shape[0], 10000)])
+        bandwidth = estimate_bandwidth(data[np.random.choice(data.shape[0], 10000)], n_jobs=n_jobs)
     print(f"Bandwidth value in use: {bandwidth}")
     print(f"Color space in use: {color}")
     clustering = MeanShift(bandwidth=bandwidth, n_jobs=n_jobs).fit(data[np.random.choice(data.shape[0], n_samples)])

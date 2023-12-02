@@ -1,6 +1,7 @@
 import click
 import pathlib
 import json
+import os
 
 COLORED = [
   '28_6404_4_fbg.jpg', '28_6506_4_fbg.jpg', '28_6605_D.jpg', 
@@ -38,22 +39,24 @@ def main(input_dir, ratio):
     'monochrome': {'colored': 0, 'monochrome': 0}
   }
   for c_map in COLORED:
-    with open(os.path.join(input_dir, c_map), 'r') as fd:
+    stem = pathlib.Path(c_map).stem
+    with open(os.path.join(input_dir, f"{stem}", f"{stem}.json"), 'r') as fd:
       data = json.load(fd)
       sizes = [data[key]['size'] for key in data]
       sizes = sorted(sizes)
-      r = sizes[-1] / float(sum(sizes[:-1]))
-      if r < ratio:
+      r = sizes[-1] / float(sum(sizes))
+      if r > (1 - ratio):
         confusion['colored']['monochrome'] += 1
       else:
         confusion['colored']['colored'] += 1
   for m_map in MONOCHROME:
-    with open(os.path.join(input_dir, c_map), 'r') as fd:
+    stem = pathlib.Path(m_map).stem
+    with open(os.path.join(input_dir, f"{stem}", f"{stem}.json"), 'r') as fd:
       data = json.load(fd)
       sizes = [data[key]['size'] for key in data]
       sizes = sorted(sizes)
-      r = sizes[-1] / float(sum(sizes[:-1]))
-      if r < ratio:
+      r = sizes[-1] / float(sum(sizes))
+      if r > (1 - ratio):
         confusion['monochrome']['monochrome'] += 1
       else:
         confusion['monochrome']['colored'] += 1
